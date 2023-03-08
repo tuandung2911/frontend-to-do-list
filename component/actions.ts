@@ -10,10 +10,6 @@ export type ToDoListAction =
   | {
       type: "UPDATE_STATE_LOADING";
       payload: boolean;
-    }
-  | {
-      type: string;
-      payload: Array<string>;
     };
 
 export const updateStateTaskOpenDetail = (payload: Array<string>) => ({

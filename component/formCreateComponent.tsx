@@ -17,8 +17,12 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { PioritySelect } from "../src/constant";
 import axios from "axios";
+import { updateStateLoading } from "./actions";
+import { useToDoListContext } from "./selectors";
 
-export default function FormUpdateComponent() {
+export default function FormCreateComponent() {
+  const { state: stateToDoList, dispatch: dispatchToDoList } =
+    useToDoListContext();
   const [inputTitle, setInputTitle] = React.useState<string>("");
   const [inputDesciption, setInputDesciption] = React.useState<string>("");
   const [dueDate, setDueDate] = React.useState<Dayjs | null>(dayjs(new Date()));
@@ -42,6 +46,7 @@ export default function FormUpdateComponent() {
   };
 
   const createTaskFn = async () => {
+    dispatchToDoList(updateStateLoading(true));
     try {
       const createTask = await axios({
         method: "post",
@@ -56,6 +61,7 @@ export default function FormUpdateComponent() {
     } catch (error) {
       console.log("loi me roi");
     }
+    dispatchToDoList(updateStateLoading(false));
   };
 
   return (
@@ -89,8 +95,14 @@ export default function FormUpdateComponent() {
         value={inputDesciption}
         onChange={onChangeInputDesciption}
       />
-      <Grid container columns={2} spacing={2} sx={{}}>
-        <Grid item xs={2} sm={4} md={1} sx={{}}>
+      <Grid
+        container
+        direction={{ xs: "column", sm: "row" }}
+        columns={2}
+        spacing={2}
+        sx={{}}
+      >
+        <Grid item xs={1} sm={1} md={1} sx={{}}>
           <Typography
             sx={{
               fontWeight: 700,
@@ -104,10 +116,11 @@ export default function FormUpdateComponent() {
               minDate={dayjs(new Date())}
               format="DD MM YYYY"
               onChange={(newValue) => setDueDate(newValue)}
+              sx={{ width: "100%" }}
             />
           </LocalizationProvider>
         </Grid>
-        <Grid item xs={2} sm={4} md={1} sx={{}}>
+        <Grid item xs={1} sm={1} md={1} sx={{}}>
           <Typography
             sx={{
               fontWeight: 700,
@@ -139,6 +152,7 @@ export default function FormUpdateComponent() {
         variant="contained"
         sx={{ bgcolor: "green", mt: "2rem" }}
         onClick={createTaskFn}
+        disabled={stateToDoList.isLoadingPage}
       >
         Add
       </Button>

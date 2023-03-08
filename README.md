@@ -11,7 +11,12 @@ curl https://codeload.github.com/mui/material-ui/tar.gz/master | tar -xz --strip
 cd material-next-ts
 ```
 
-Install it and run:
+## config
+
+create file `.env` same `.env.example` and config uri server
+
+
+## Install it and run:
 
 ```sh
 npm install

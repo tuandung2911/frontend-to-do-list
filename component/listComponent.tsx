@@ -114,6 +114,14 @@ export default function ListComponent() {
       method: "delete",
       url: `${process.env.NEXT_PUBLIC_HOST_BACKEND}/to-do-list/${id}`,
     });
+
+    const searchTask = stateToDoList.arrCheckBox.findIndex((v) => v == id);
+    if (searchTask > -1) {
+      // neu co trong arr thi xoa
+      stateToDoList.arrCheckBox.splice(searchTask, 1);
+      dispatchToDoList(updateStateCheckBox([...stateToDoList.arrCheckBox]));
+    } 
+
     dispatchToDoList(updateStateLoading(false));
   };
 

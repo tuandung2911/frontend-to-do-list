@@ -2,9 +2,9 @@ export const PioritySelect = ["Low", "Normal", "High"];
 export type responseList = {
   _id: string;
   title: string;
-  dueDate: Date;
+  dueDate: string;
   description: string;
-  priority: string;
+  priority: number;
   created: Date;
   updated: Date;
 };

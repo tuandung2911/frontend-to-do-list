@@ -36,26 +36,41 @@ export default function ListComponent() {
   const { state: stateToDoList, dispatch: dispatchToDoList } =
     useToDoListContext();
   const [inputSearch, setInputSearch] = React.useState<string>("");
-  const [inputTitle, setInputTitle] = React.useState<string>("");
-  const [inputDesciption, setInputDesciption] = React.useState<string>("");
-  const [dueDate, setDueDate] = React.useState<Dayjs | null>(dayjs(new Date()));
   const [dataState, setDataState] = React.useState<responseList[]>([]);
-  const [Piority, setPiority] = React.useState("2");
 
-  const handleSelectPiority = (event: SelectChangeEvent) => {
-    setPiority(event.target.value as string);
+  const handleSelectPiority = (event: SelectChangeEvent, id: string) => {
+    dataState.find((v) => {
+      if (v._id == id) {
+        v.priority = Number(event.target.value as string);
+      }
+    });
+    setDataState([...dataState]);
   };
 
-  const onChangeInputTitle = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const onChangeInputTitle = (
+    e: React.ChangeEvent<HTMLTextAreaElement>,
+    id: string
+  ) => {
     e.preventDefault();
-    setInputTitle(e.target.value);
+    dataState.find((v) => {
+      if (v._id == id) {
+        v.title = e.target.value;
+      }
+    });
+    setDataState([...dataState]);
   };
 
   const onChangeInputDesciption = (
-    e: React.ChangeEvent<HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLTextAreaElement>,
+    id: string
   ) => {
     e.preventDefault();
-    setInputDesciption(e.target.value);
+    dataState.find((v) => {
+      if (v._id == id) {
+        v.description = e.target.value;
+      }
+    });
+    setDataState([...dataState]);
   };
 
   const handleInputSearch = (event: React.ChangeEvent<any>) => {
@@ -67,9 +82,24 @@ export default function ListComponent() {
       method: "get",
       url: `${process.env.NEXT_PUBLIC_HOST_BACKEND}/to-do-list`,
     });
-    console.log("resp.data", resp.data);
     setDataState(resp.data);
     localStorage.setItem(storageNameList, JSON.stringify(resp.data));
+  };
+
+  const updateTask = async (id: string) => {
+    const data = dataState.find((v) => v._id == id);
+    await axios({
+      method: "patch",
+      url: `${process.env.NEXT_PUBLIC_HOST_BACKEND}/to-do-list/${id}`,
+      data: {
+        title: data?.title,
+        description: data?.description,
+        priority: data?.priority,
+        dueDate: data?.dueDate,
+      },
+    });
+
+    await getData();
   };
 
   React.useEffect(() => {
@@ -78,11 +108,6 @@ export default function ListComponent() {
 
   React.useEffect(() => {
     if (inputSearch.length > 0) {
-      console.log(
-        search,
-        search.search(inputSearch),
-        "search.search(inputSearch)"
-      );
       setDataState(search.search(inputSearch) as responseList[]);
     } else {
       setDataState(
@@ -138,7 +163,7 @@ export default function ListComponent() {
                   ? true
                   : false
               }
-              sx={{ border: "1px solid black" }}
+              sx={{ border: "1px solid black", mb: 2 }}
             >
               <AccordionSummary
                 sx={{
@@ -157,9 +182,6 @@ export default function ListComponent() {
                     control={<Checkbox defaultChecked={false} />}
                     label={value.title}
                   />
-                  {stateToDoList.arrTaskOpenDetail.find((v) => v == value._id)
-                    ? "true"
-                    : "false"}
                   <Stack
                     direction={"row"}
                     alignItems="center"
@@ -185,8 +207,10 @@ export default function ListComponent() {
                   fullWidth
                   sx={{}}
                   required={true}
-                  value={inputTitle}
-                  onChange={onChangeInputTitle}
+                  value={value.title}
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                    onChangeInputTitle(e, value._id)
+                  }
                   placeholder={"Add new task..."}
                   variant="outlined"
                 />
@@ -205,8 +229,10 @@ export default function ListComponent() {
                     maxWidth: "100%",
                     marginBottom: "1rem",
                   }}
-                  value={inputDesciption}
-                  onChange={onChangeInputDesciption}
+                  value={value.description ?? ""}
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                    onChangeInputDesciption(e, value._id)
+                  }
                 />
                 <Grid container columns={2} spacing={2} sx={{}}>
                   <Grid item xs={2} sm={4} md={1} sx={{}}>
@@ -220,10 +246,17 @@ export default function ListComponent() {
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
                       <DatePicker
                         sx={{ width: "100%" }}
-                        value={dueDate}
+                        value={dayjs(new Date(value.dueDate))}
                         minDate={dayjs(new Date())}
                         format="DD MM YYYY"
-                        onChange={(newValue) => setDueDate(newValue)}
+                        onChange={(newValue) => {
+                          dataState.find((v) => {
+                            if (v._id == value._id) {
+                              v.dueDate = String(newValue);
+                            }
+                          });
+                          setDataState([...dataState]);
+                        }}
                       />
                     </LocalizationProvider>
                   </Grid>
@@ -239,15 +272,17 @@ export default function ListComponent() {
                       <Select
                         labelId="select-task"
                         id="simple-select"
-                        value={Piority}
-                        onChange={handleSelectPiority}
+                        value={String(value.priority)}
+                        onChange={(e: SelectChangeEvent) =>
+                          handleSelectPiority(e, value._id)
+                        }
                       >
-                        {PioritySelect.map((value, index) => (
+                        {PioritySelect.map((Item, index) => (
                           <MenuItem
                             key={`item-piority-${index}`}
                             value={String(index + 1)}
                           >
-                            {value}
+                            {Item}
                           </MenuItem>
                         ))}
                       </Select>
@@ -258,7 +293,7 @@ export default function ListComponent() {
                   fullWidth
                   variant="contained"
                   sx={{ bgcolor: "green", mt: "2rem" }}
-                  // onClick={createTaskFn}
+                  onClick={() => updateTask(value._id)}
                 >
                   Update
                 </Button>

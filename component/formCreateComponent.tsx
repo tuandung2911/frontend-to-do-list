@@ -24,6 +24,8 @@ export default function FormCreateComponent() {
   const { state: stateToDoList, dispatch: dispatchToDoList } =
     useToDoListContext();
   const [inputTitle, setInputTitle] = React.useState<string>("");
+  const [isErrTitle, setIsErrTitle] = React.useState<boolean>(false);
+  const [inputErrTitle, setInputErrTitle] = React.useState<string>("");
   const [inputDesciption, setInputDesciption] = React.useState<string>("");
   const [dueDate, setDueDate] = React.useState<Dayjs | null>(dayjs(new Date()));
 
@@ -47,6 +49,12 @@ export default function FormCreateComponent() {
 
   const createTaskFn = async () => {
     dispatchToDoList(updateStateLoading(true));
+    if (inputTitle.length <= 0) {
+      setInputErrTitle("Title is required");
+      setIsErrTitle(true);
+      dispatchToDoList(updateStateLoading(false));
+      return;
+    }
     try {
       const createTask = await axios({
         method: "post",
@@ -64,6 +72,15 @@ export default function FormCreateComponent() {
     dispatchToDoList(updateStateLoading(false));
   };
 
+  React.useEffect(() => {
+    if (isErrTitle) {
+      setTimeout(() => {
+        setInputErrTitle("");
+        setIsErrTitle(false);
+      }, 3000);
+    }
+  }, [isErrTitle]);
+
   return (
     <Box sx={{}}>
       <Box
@@ -75,7 +92,8 @@ export default function FormCreateComponent() {
         id="text-field-title"
         fullWidth
         sx={{}}
-        required={true}
+        error={isErrTitle}
+        helperText={inputErrTitle}
         value={inputTitle}
         onChange={onChangeInputTitle}
         placeholder={"Add new task..."}
